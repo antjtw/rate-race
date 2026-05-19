@@ -584,12 +584,17 @@
       <ul>
         <li><strong>Player 1 names a film.</strong> The Searcher pulls it up on IMDb and announces the rating. This is the <em>anchor</em>.</li>
         <li><strong>The next player names a film</strong> — <em>without looking it up</em> — trying to land per the chosen mode and threshold.</li>
-        <li>The Searcher reveals the rating. <strong>That film becomes the new anchor</strong> — whether the guess landed or failed.</li>
-        <li><strong>One guess per turn, no retries.</strong> A correct guess survives; a wrong guess costs a take. Either way, play passes immediately to the next player, who now faces the new anchor.</li>
+        <li>The Searcher reveals the rating.
+          <ul style="margin-top: 8px;">
+            <li><strong>Correct guess:</strong> that film becomes the new anchor.</li>
+            <li><strong>Failed guess:</strong> the anchor doesn't change. The next player faces the exact same target.</li>
+          </ul>
+        </li>
+        <li><strong>One guess per turn, no retries.</strong> A correct guess survives; a wrong guess costs a take. Either way, play passes immediately to the next player.</li>
       </ul>
       <div class="callout" style="margin-top: 24px;">
         <div class="callout-label">★ Important</div>
-        <p>Losing a take <strong>ends your turn</strong>. You don't get a second attempt at the same anchor. The next player is up, working off the new (failed) anchor.</p>
+        <p>A failed guess <strong>doesn't reset the anchor</strong>. The next player faces the same target — and the player after them, and the player after them — until someone lands a correct guess. A nasty anchor can drain the whole table before it's cleared.</p>
       </div>
     </section>
 

@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>RATE RACE — a movie rating game</title>
-  <meta name="description" content="A higher-or-lower movie rating game built on IMDb. 3 takes. Last correct guess wins.">
+  <meta name="description" content="A higher-or-lower movie rating game built on IMDb. Five modes. Four thresholds. Last correct guess wins.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
@@ -12,9 +12,11 @@
     :root {
       --bg: #0A0A0A;
       --bg-elevated: #141414;
+      --bg-card: #161616;
       --imdb: #F5C518;
       --imdb-warm: #FFB800;
       --hot: #FF3D6B;
+      --cool: #4ECDC4;
       --text: #F5F5F5;
       --text-muted: #8A8A8A;
       --text-dim: #4A4A4A;
@@ -55,22 +57,45 @@
     /* Warm radial glow behind hero */
     .glow {
       position: fixed;
-      top: 50%;
+      top: 30%;
       left: 50%;
       width: min(900px, 130vw);
       height: min(900px, 130vw);
-      transform: translate(-50%, -55%);
+      transform: translate(-50%, -50%);
       background: radial-gradient(circle, rgba(245, 197, 24, 0.18) 0%, rgba(255, 184, 0, 0.08) 30%, transparent 65%);
       pointer-events: none;
       z-index: 0;
       animation: pulse 6s ease-in-out infinite;
     }
 
-    @keyframes pulse {
-      0%, 100% { opacity: 0.7; transform: translate(-50%, -55%) scale(1); }
-      50% { opacity: 1; transform: translate(-50%, -55%) scale(1.05); }
+    /* Secondary hot-pink glow — offset for depth */
+    .glow-hot {
+      position: fixed;
+      top: 70%;
+      right: -10%;
+      width: min(600px, 90vw);
+      height: min(600px, 90vw);
+      background: radial-gradient(circle, rgba(255, 61, 107, 0.14) 0%, rgba(255, 61, 107, 0.04) 35%, transparent 65%);
+      pointer-events: none;
+      z-index: 0;
+      animation: pulse 8s ease-in-out infinite;
+      animation-delay: -2s;
     }
 
+    @keyframes pulse {
+      0%, 100% { opacity: 0.7; transform: translate(-50%, -50%) scale(1); }
+      50% { opacity: 1; transform: translate(-50%, -50%) scale(1.05); }
+    }
+
+    .glow-hot {
+      animation-name: pulseHot;
+    }
+    @keyframes pulseHot {
+      0%, 100% { opacity: 0.55; transform: scale(1); }
+      50% { opacity: 0.85; transform: scale(1.08); }
+    }
+
+    /* ============ LANDING ============ */
     .landing {
       position: relative;
       z-index: 1;
@@ -84,7 +109,7 @@
       width: 100%;
     }
 
-    /* Letterbox bars (top + bottom marks) */
+    /* Letterbox bars */
     .brand-mark, .footer-mark {
       display: flex;
       justify-content: space-between;
@@ -107,6 +132,12 @@
       margin-right: 6px;
     }
 
+    .brand-mark .live, .footer-mark .live {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
     .brand-mark .dot, .footer-mark .dot {
       width: 6px;
       height: 6px;
@@ -121,18 +152,18 @@
       50% { opacity: 0.3; }
     }
 
-    /* Hero */
+    /* ============ HERO ============ */
     .hero {
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
       text-align: center;
-      gap: 24px;
-      padding: 16px 0;
+      gap: 22px;
+      padding: 24px 0;
     }
 
-    /* IMDB pill chip — replaces the 5-star row */
+    /* IMDB pill */
     .imdb-chip {
       display: inline-flex;
       align-items: center;
@@ -151,18 +182,15 @@
       box-shadow: 0 0 24px rgba(245, 197, 24, 0.35);
     }
 
-    .imdb-chip::before {
-      content: '★';
-      font-size: 12px;
-    }
+    .imdb-chip::before { content: '★'; font-size: 12px; }
 
-    /* Title */
+    /* Title — bigger and bolder */
     .title {
       font-family: 'Anton', sans-serif;
       font-weight: 400;
-      line-height: 0.86;
-      letter-spacing: -0.02em;
-      font-size: clamp(110px, 32vw, 280px);
+      line-height: 0.84;
+      letter-spacing: -0.03em;
+      font-size: clamp(110px, 32vw, 300px);
       display: flex;
       flex-direction: column;
       color: var(--text);
@@ -183,60 +211,44 @@
     .title-line:nth-child(1) span { animation-delay: 0.1s; }
     .title-line:nth-child(2) span {
       animation-delay: 0.25s;
-      color: var(--imdb);
-      text-shadow: 0 0 60px rgba(245, 197, 24, 0.5);
+      color: transparent;
+      -webkit-text-stroke: clamp(2px, 0.6vw, 5px) var(--imdb);
     }
 
     @keyframes rise {
       to { transform: translateY(0); }
     }
 
-    /* Film-slate mono mark — replaces the 5-star row */
-    .slate-mark {
-      display: inline-flex;
-      align-items: center;
-      gap: 12px;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 0.28em;
+    /* Strapline — three-tone progressive type */
+    .strapline {
+      font-family: 'Anton', sans-serif;
+      font-weight: 400;
+      font-size: clamp(22px, 5vw, 38px);
+      line-height: 1.15;
+      letter-spacing: 0.01em;
       text-transform: uppercase;
-      color: var(--text-muted);
+      color: var(--text);
+      max-width: 720px;
       opacity: 0;
       animation: fadeIn 0.6s ease-out 0.7s forwards;
     }
 
-    .slate-mark .bar {
-      width: 24px;
-      height: 1px;
-      background: var(--imdb);
-    }
-
-    .slate-mark .accent {
-      color: var(--imdb);
-    }
+    .strapline .l1 { color: var(--text); }
+    .strapline .l2 { color: var(--imdb); }
+    .strapline .l3 { color: var(--hot); }
 
     /* Tagline */
     .tagline {
-      font-size: clamp(15px, 3.5vw, 18px);
+      font-size: clamp(15px, 3.5vw, 17px);
       font-weight: 400;
       color: var(--text-muted);
-      max-width: 440px;
+      max-width: 480px;
       line-height: 1.55;
       opacity: 0;
       animation: fadeIn 0.6s ease-out 0.85s forwards;
     }
 
-    .tagline strong {
-      color: var(--text);
-      font-weight: 700;
-    }
-
-    .tagline em {
-      font-style: normal;
-      color: var(--imdb);
-      font-weight: 700;
-    }
+    .tagline strong { color: var(--text); font-weight: 700; }
 
     /* Actions */
     .actions {
@@ -246,14 +258,12 @@
       align-items: center;
       width: 100%;
       max-width: 360px;
-      margin: 0 auto;
+      margin: 8px auto 0;
       opacity: 0;
       animation: fadeIn 0.6s ease-out 1s forwards;
     }
 
-    @keyframes fadeIn {
-      to { opacity: 1; }
-    }
+    @keyframes fadeIn { to { opacity: 1; } }
 
     .btn {
       width: 100%;
@@ -276,11 +286,7 @@
       overflow: hidden;
     }
 
-    .btn-primary {
-      background: var(--imdb);
-      color: var(--bg);
-    }
-
+    .btn-primary { background: var(--imdb); color: var(--bg); }
     .btn-primary:hover {
       transform: translateY(-2px);
       box-shadow: 0 12px 40px rgba(245, 197, 24, 0.4);
@@ -294,39 +300,161 @@
       color: var(--text);
       border: 1px solid var(--border-bright);
     }
-
     .btn-ghost:hover {
-      border-color: var(--text-muted);
-      background: var(--bg-elevated);
+      border-color: var(--hot);
+      background: rgba(255, 61, 107, 0.06);
+      color: var(--hot);
     }
 
     @media (hover: none) {
       .btn-primary:hover { transform: none; box-shadow: none; }
-      .btn-ghost:hover { background: transparent; }
+      .btn-ghost:hover { background: transparent; color: var(--text); border-color: var(--border-bright); }
     }
 
-    @media (min-width: 640px) {
-      .actions {
-        flex-direction: row;
-        max-width: 520px;
+    /* ============ SPECS STRIP ============ */
+    .specs {
+      position: relative;
+      z-index: 1;
+      padding: 64px 24px 56px;
+      border-top: 1px solid var(--border);
+      background: linear-gradient(180deg, var(--bg) 0%, var(--bg-elevated) 100%);
+    }
+
+    .specs-label {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      max-width: 1200px;
+      margin: 0 auto 36px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.32em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .specs-label::before,
+    .specs-label::after {
+      content: '';
+      flex: 0 0 32px;
+      height: 1px;
+      background: var(--imdb);
+      opacity: 0.5;
+    }
+
+    .specs-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 48px 16px;
+      align-items: center;
+      text-align: center;
+    }
+
+    .spec {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      position: relative;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .spec.in-view {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .spec-num {
+      font-family: 'Anton', sans-serif;
+      font-size: clamp(72px, 14vw, 120px);
+      line-height: 0.85;
+      letter-spacing: -0.02em;
+      color: var(--imdb);
+      filter: drop-shadow(0 0 32px rgba(245, 197, 24, 0.35));
+    }
+
+    .spec:nth-child(2) .spec-num { color: var(--hot); filter: drop-shadow(0 0 32px rgba(255, 61, 107, 0.35)); }
+    .spec:nth-child(3) .spec-num { color: var(--cool); filter: drop-shadow(0 0 32px rgba(78, 205, 196, 0.3)); }
+    .spec:nth-child(4) .spec-num { color: var(--text); filter: drop-shadow(0 0 32px rgba(245, 245, 245, 0.25)); }
+
+    .spec-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    @media (min-width: 768px) {
+      .specs-inner {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 24px;
       }
-      .landing {
-        padding: 32px 40px;
-        gap: 48px;
+      .spec:not(:first-child)::before {
+        content: '';
+        position: absolute;
+        left: -8px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 1px;
+        height: 70%;
+        background: var(--border-bright);
       }
     }
 
-    @media (min-width: 1024px) {
-      .landing { padding: 40px 64px; }
-      .hero { gap: 32px; }
+    /* ============ MARQUEE ============ */
+    .marquee-strip {
+      position: relative;
+      z-index: 1;
+      overflow: hidden;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+      padding: 22px 0;
     }
 
-    @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-      }
-      .title-line span { transform: translateY(0); }
+    .marquee-track {
+      display: flex;
+      gap: 36px;
+      white-space: nowrap;
+      animation: marquee 60s linear infinite;
+      width: max-content;
+    }
+
+    @keyframes marquee {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+
+    .m-item {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--text);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .m-item .ico { color: var(--imdb); }
+    .m-item.hot { color: var(--hot); }
+    .m-item.hot .ico { color: var(--hot); }
+    .m-item.cool { color: var(--cool); }
+    .m-item.cool .ico { color: var(--cool); }
+    .m-item.dot {
+      color: var(--imdb);
+      font-size: 18px;
+      opacity: 0.7;
     }
 
     /* ============ CREDITS FOOTER ============ */
@@ -337,7 +465,6 @@
       margin: 0 auto;
       padding: 48px 24px 56px;
       text-align: center;
-      border-top: 1px solid var(--border);
     }
 
     .credits-copy {
@@ -363,16 +490,45 @@
       font-style: normal;
       font-weight: 500;
     }
+
+    /* ============ RESPONSIVE ============ */
+    @media (min-width: 640px) {
+      .actions {
+        flex-direction: row;
+        max-width: 520px;
+      }
+      .landing {
+        padding: 32px 40px;
+        gap: 48px;
+      }
+    }
+
+    @media (min-width: 1024px) {
+      .landing { padding: 40px 64px; }
+      .hero { gap: 28px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+      }
+      .title-line span { transform: translateY(0); }
+      .spec { opacity: 1; transform: translateY(0); }
+      .marquee-track { animation: none; }
+    }
   </style>
 </head>
 <body>
   <div class="glow"></div>
+  <div class="glow-hot"></div>
+
   <main class="landing">
     <header class="brand-mark">
       <span><span class="star">★</span>Rate Race</span>
-      <span style="display: flex; align-items: center; gap: 10px;">
+      <span class="live">
         <span class="dot"></span>
-        <span>Est. 2026</span>
+        <span>Now Playing</span>
       </span>
     </header>
 
@@ -384,13 +540,13 @@
         <span class="title-line"><span>RACE</span></span>
       </h1>
 
-      <div class="slate-mark">
-        <span class="bar"></span>
-        <span>Take 01 <span class="accent">●</span> Scene 01 <span class="accent">●</span> Roll</span>
-        <span class="bar"></span>
+      <div class="strapline">
+        <span class="l1">Higher.</span>&nbsp;
+        <span class="l2">Lower.</span>&nbsp;
+        <span class="l3">Dead on the nose.</span>
       </div>
 
-      <p class="tagline">A higher-or-lower movie rating game built on IMDb. <strong>3 takes.</strong> <em>Last correct guess wins.</em></p>
+      <p class="tagline">IMDb's higher-or-lower party game. <strong>Five modes. Four thresholds. Last correct guess takes the win.</strong></p>
 
       <div class="actions">
         <a href="play.html" class="btn btn-primary">
@@ -401,10 +557,78 @@
     </section>
 
     <footer class="footer-mark">
-      <span>3 Takes <span class="star" style="margin: 0 6px;">●</span> Last Correct Wins</span>
-      <span>A Higher-or-Lower Game</span>
+      <span><span class="star">●</span>2-8 Players</span>
+      <span>Est. 2026</span>
     </footer>
   </main>
+
+  <!-- SPECS STRIP -->
+  <section class="specs">
+    <div class="specs-label">The Spec Sheet</div>
+    <div class="specs-inner">
+      <div class="spec">
+        <div class="spec-num">05</div>
+        <div class="spec-label">Modes</div>
+      </div>
+      <div class="spec">
+        <div class="spec-num">04</div>
+        <div class="spec-label">Thresholds</div>
+      </div>
+      <div class="spec">
+        <div class="spec-num">08</div>
+        <div class="spec-label">Players Max</div>
+      </div>
+      <div class="spec">
+        <div class="spec-num">03</div>
+        <div class="spec-label">Takes Each</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MARQUEE -->
+  <div class="marquee-strip">
+    <div class="marquee-track">
+      <!-- Set 1 -->
+      <span class="m-item"><span class="ico">★</span> Easy Rider</span>
+      <span class="m-item dot">●</span>
+      <span class="m-item hot"><span class="ico">★</span> Medium Cool</span>
+      <span class="m-item dot">●</span>
+      <span class="m-item cool"><span class="ico">★</span> Hard Knocks</span>
+      <span class="m-item dot">●</span>
+      <span class="m-item"><span class="ico">★</span> Razor's Edge</span>
+      <span class="m-item dot">●</span>
+      <span class="m-item">Roll Credits</span>
+      <span class="m-item dot">●</span>
+      <span class="m-item hot">Cut! Print It</span>
+      <span class="m-item dot">●</span>
+      <span class="m-item cool">Fade Out</span>
+      <span class="m-item dot">●</span>
+      <span class="m-item">That's a Wrap</span>
+      <span class="m-item dot">●</span>
+      <span class="m-item hot">Last Correct Wins</span>
+      <span class="m-item dot">●</span>
+
+      <!-- Duplicate for seamless scroll -->
+      <span class="m-item"><span class="ico">★</span> Easy Rider</span>
+      <span class="m-item dot">●</span>
+      <span class="m-item hot"><span class="ico">★</span> Medium Cool</span>
+      <span class="m-item dot">●</span>
+      <span class="m-item cool"><span class="ico">★</span> Hard Knocks</span>
+      <span class="m-item dot">●</span>
+      <span class="m-item"><span class="ico">★</span> Razor's Edge</span>
+      <span class="m-item dot">●</span>
+      <span class="m-item">Roll Credits</span>
+      <span class="m-item dot">●</span>
+      <span class="m-item hot">Cut! Print It</span>
+      <span class="m-item dot">●</span>
+      <span class="m-item cool">Fade Out</span>
+      <span class="m-item dot">●</span>
+      <span class="m-item">That's a Wrap</span>
+      <span class="m-item dot">●</span>
+      <span class="m-item hot">Last Correct Wins</span>
+      <span class="m-item dot">●</span>
+    </div>
+  </div>
 
   <footer class="credits-footer">
     <div class="credits-copy">© 2026 ANTJTW</div>
@@ -415,5 +639,24 @@
       on a 12 hour journey through France 🇫🇷
     </p>
   </footer>
+
+  <script>
+    // Scroll-triggered reveal for specs
+    const specs = document.querySelectorAll('.spec');
+    if ('IntersectionObserver' in window) {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry, i) => {
+          if (entry.isIntersecting) {
+            const delay = Array.from(specs).indexOf(entry.target) * 90;
+            setTimeout(() => entry.target.classList.add('in-view'), delay);
+            observer.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.25 });
+      specs.forEach(s => observer.observe(s));
+    } else {
+      specs.forEach(s => s.classList.add('in-view'));
+    }
+  </script>
 </body>
 </html>
