@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rules — RATE RACE</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0A0A0A;
+      --bg-elevated: #141414;
+      --bg-card: #161616;
+      --imdb: #F5C518;
+      --imdb-warm: #FFB800;
+      --hot: #FF3D6B;
+      --text: #F5F5F5;
+      --text-muted: #8A8A8A;
+      --text-dim: #4A4A4A;
+      --border: #1F1F1F;
+      --border-bright: #2A2A2A;
+      --danger: #FF3D3D;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Hanken Grotesk', sans-serif;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.92' numOctaves='3' stitchTiles='stitch'/></filter><rect width='240' height='240' filter='url(%23n)' opacity='0.6'/></svg>");
+      pointer-events: none;
+      opacity: 0.05;
+      mix-blend-mode: overlay;
+      z-index: 100;
+    }
+
+    .nav {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(10, 10, 10, 0.88);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .nav-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      transition: color 0.2s;
+    }
+    .nav-back:hover { color: var(--text); }
+    .nav-back svg { transition: transform 0.2s; }
+    .nav-back:hover svg { transform: translateX(-3px); }
+
+    .nav-mark {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--imdb);
+    }
+
+    .page {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 32px 24px 80px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Hero header */
+    .header {
+      padding: 16px 0 56px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 48px;
+      position: relative;
+    }
+
+    .header-meta {
+      display: flex;
+      justify-content: space-between;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      margin-bottom: 32px;
+    }
+
+    .header-meta .imdb-tag {
+      color: var(--imdb);
+    }
+
+    .header h1 {
+      font-family: 'Anton', sans-serif;
+      font-weight: 400;
+      font-size: clamp(84px, 18vw, 180px);
+      line-height: 0.85;
+      letter-spacing: -0.02em;
+      text-transform: uppercase;
+      margin-bottom: 32px;
+    }
+
+    .header h1 .accent { color: var(--imdb); }
+
+    .header p {
+      font-size: 17px;
+      line-height: 1.55;
+      color: var(--text-muted);
+      max-width: 520px;
+    }
+
+    .header p strong {
+      color: var(--text);
+      font-weight: 700;
+    }
+
+    /* Sections */
+    section {
+      padding: 36px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    section:last-of-type { border-bottom: none; }
+
+    .section-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      color: var(--text-dim);
+      margin-bottom: 10px;
+      display: block;
+      text-transform: uppercase;
+    }
+
+    h2 {
+      font-family: 'Anton', sans-serif;
+      font-weight: 400;
+      font-size: clamp(40px, 8vw, 64px);
+      line-height: 0.92;
+      letter-spacing: -0.01em;
+      text-transform: uppercase;
+      margin-bottom: 24px;
+    }
+
+    h3 {
+      font-family: 'Hanken Grotesk', sans-serif;
+      font-weight: 700;
+      font-size: 15px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-top: 24px;
+      margin-bottom: 12px;
+      color: var(--text);
+    }
+
+    p {
+      font-size: 16px;
+      line-height: 1.65;
+      color: var(--text);
+      margin-bottom: 16px;
+    }
+
+    p.lead {
+      font-size: 17px;
+      color: var(--text-muted);
+    }
+
+    strong { color: var(--imdb); font-weight: 700; }
+    em { color: var(--text); font-style: italic; }
+
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 16px 0;
+    }
+
+    ul li {
+      position: relative;
+      padding-left: 24px;
+      margin-bottom: 12px;
+      font-size: 16px;
+      line-height: 1.6;
+      color: var(--text);
+    }
+
+    ul li::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 11px;
+      width: 12px;
+      height: 1px;
+      background: var(--imdb);
+    }
+
+    /* Cast/crew grid */
+    .crew {
+      display: grid;
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    .crew-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-bright);
+      border-radius: 8px;
+      padding: 20px;
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .crew-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      padding: 6px 10px;
+      background: var(--imdb);
+      color: var(--bg);
+      border-radius: 4px;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .crew-card:nth-child(2) .crew-badge { background: var(--hot); color: white; }
+
+    .crew-name {
+      font-family: 'Anton', sans-serif;
+      font-size: 22px;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .crew-desc {
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.5;
+      margin: 0;
+    }
+
+    /* Mode card grid */
+    .modes {
+      display: grid;
+      gap: 10px;
+      margin: 24px 0;
+    }
+
+    .mode-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-bright);
+      border-radius: 8px;
+      padding: 20px;
+      transition: border-color 0.2s, transform 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .mode-card:hover {
+      border-color: var(--imdb);
+      transform: translateY(-1px);
+    }
+
+    .mode-card::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: var(--imdb);
+      opacity: 0.6;
+    }
+
+    .mode-card:nth-child(3)::before { background: var(--hot); }
+    .mode-card:nth-child(5)::before { background: #4ECDC4; }
+
+    .mode-name {
+      font-family: 'Anton', sans-serif;
+      font-size: 26px;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+      color: var(--text);
+    }
+
+    .mode-card p {
+      font-size: 15px;
+      color: var(--text-muted);
+      margin: 0;
+      line-height: 1.55;
+    }
+
+    /* Threshold cards */
+    .thresholds {
+      display: grid;
+      gap: 8px;
+      margin: 24px 0;
+    }
+
+    .threshold {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 16px;
+      padding: 16px 20px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-bright);
+      border-radius: 8px;
+      align-items: center;
+      transition: border-color 0.2s;
+    }
+
+    .threshold:hover { border-color: var(--imdb); }
+
+    .threshold-window {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--imdb);
+      letter-spacing: 0.05em;
+      padding: 6px 10px;
+      background: rgba(245, 197, 24, 0.08);
+      border-radius: 4px;
+      min-width: 60px;
+      text-align: center;
+    }
+
+    .threshold-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .threshold-name {
+      font-family: 'Anton', sans-serif;
+      font-size: 22px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--text);
+    }
+
+    .threshold-note {
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    .threshold-ref {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      text-align: right;
+      line-height: 1.3;
+    }
+
+    /* Callouts */
+    .callout {
+      background: linear-gradient(135deg, rgba(245, 197, 24, 0.08), rgba(245, 197, 24, 0.02));
+      border-left: 2px solid var(--imdb);
+      padding: 20px 24px;
+      margin: 24px 0;
+      border-radius: 0 4px 4px 0;
+    }
+
+    .callout.hot {
+      background: linear-gradient(135deg, rgba(255, 61, 107, 0.08), rgba(255, 61, 107, 0.02));
+      border-left-color: var(--hot);
+    }
+
+    .callout-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--imdb);
+      margin-bottom: 8px;
+    }
+
+    .callout.hot .callout-label { color: var(--hot); }
+
+    .callout p {
+      font-size: 16px;
+      margin: 0;
+      color: var(--text);
+    }
+
+    .lose-list li::before { background: var(--danger); }
+
+    /* Bottom CTA */
+    .bottom-cta {
+      margin-top: 64px;
+      padding: 48px 28px 36px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .bottom-cta::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 50%;
+      height: 2px;
+      background: var(--imdb);
+      box-shadow: 0 0 20px var(--imdb);
+    }
+
+    .bottom-cta h3 {
+      font-family: 'Anton', sans-serif;
+      font-weight: 400;
+      font-size: 40px;
+      letter-spacing: 0;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+      color: var(--text);
+    }
+
+    .bottom-cta p {
+      color: var(--text-muted);
+      margin-bottom: 28px;
+      font-size: 15px;
+    }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 32px;
+      background: var(--imdb);
+      color: var(--bg);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      border-radius: 0;
+      transition: all 0.25s ease;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 40px rgba(245, 197, 24, 0.4);
+    }
+    .btn-primary .arrow { transition: transform 0.25s ease; }
+    .btn-primary:hover .arrow { transform: translateX(4px); }
+
+    .footnote {
+      margin-top: 36px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+      text-align: center;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: var(--text-dim);
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+
+    .page-footer {
+      max-width: 540px;
+      margin: 56px auto 0;
+      padding: 28px 20px 0;
+      border-top: 1px solid var(--border);
+      text-align: center;
+    }
+
+    .footer-copy {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      margin-bottom: 16px;
+    }
+
+    .footer-credits {
+      font-size: 13px;
+      line-height: 1.65;
+      color: var(--text-muted);
+      font-style: italic;
+      margin: 0;
+    }
+
+    .footer-credits .nick {
+      color: var(--text);
+      font-style: normal;
+      font-weight: 500;
+    }
+
+    @media (min-width: 640px) {
+      .modes { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+      .thresholds { gap: 10px; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <a href="index.html" class="nav-back">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <path d="M19 12H5M12 19l-7-7 7-7"/>
+      </svg>
+      Home
+    </a>
+    <span class="nav-mark">★ The Rulebook</span>
+  </nav>
+
+  <main class="page">
+    <header class="header">
+      <div class="header-meta">
+        <span>RATE RACE</span>
+        <span class="imdb-tag">IMDB · EDITION</span>
+      </div>
+      <h1>How to <span class="accent">Play</span></h1>
+      <p>A movie-rating guessing game for <strong>2 or more players</strong>. Higher, lower, or right on the nose. <strong>Last correct guess wins.</strong></p>
+    </header>
+
+    <section>
+      <span class="section-num">01 · Cast &amp; Crew</span>
+      <h2>Setup</h2>
+      <ul>
+        <li><strong>Players:</strong> 2 or more</li>
+        <li><strong>Takes:</strong> 3 each (what we call lives — film slang)</li>
+        <li><strong>You'll need:</strong> IMDb access on one phone or laptop</li>
+      </ul>
+      <p class="lead" style="margin-top: 24px;">Two designated roles, fixed for the entire game (no rotation, no "left of the guesser"):</p>
+      <div class="crew">
+        <div class="crew-card">
+          <span class="crew-badge">★ Role 01</span>
+          <div>
+            <div class="crew-name">The Scorekeeper</div>
+            <p class="crew-desc">Runs the tracker. Marks takes lost, takes regained, and correct guesses. Holds the rulebook.</p>
+          </div>
+        </div>
+        <div class="crew-card">
+          <span class="crew-badge">★ Role 02</span>
+          <div>
+            <div class="crew-name">The Searcher</div>
+            <p class="crew-desc">Looks up films on IMDb and reads the rating aloud. Cannot coach, cannot hint, cannot raise an eyebrow.</p>
+          </div>
+        </div>
+      </div>
+      <p style="margin-top: 16px; font-size: 14px; color: var(--text-muted);">Both still play. They just take on the off-screen duties.</p>
+    </section>
+
+    <section>
+      <span class="section-num">02 · The Loop</span>
+      <h2>The Core Loop</h2>
+      <ul>
+        <li><strong>Player 1 names a film.</strong> The Searcher pulls it up on IMDb and announces the rating. This is the <em>anchor</em>.</li>
+        <li><strong>The next player names a film</strong> — <em>without looking it up</em> — trying to land per the chosen mode and threshold.</li>
+        <li>The Searcher reveals the rating. That film becomes the new anchor. The Scorekeeper updates the tracker.</li>
+        <li>Play passes around the table. Survive your turn or lose a take.</li>
+      </ul>
+    </section>
+
+    <section>
+      <span class="section-num">03 · Modes</span>
+      <h2>Modes</h2>
+      <p class="lead">Agree on one before starting.</p>
+      <div class="modes">
+        <div class="mode-card">
+          <div class="mode-name">Ascending</div>
+          <p>Every guess must rate higher than the anchor.</p>
+        </div>
+        <div class="mode-card">
+          <div class="mode-name">Descending</div>
+          <p>Every guess must rate lower than the anchor.</p>
+        </div>
+        <div class="mode-card">
+          <div class="mode-name">Switchback</div>
+          <p>Direction flips at an agreed ceiling and floor — defaults are <strong>8.5 / 6.0</strong>, but the group sets both before play. Pinballs between IMDb's peaks and valleys.</p>
+        </div>
+        <div class="mode-card">
+          <div class="mode-name">Drift</div>
+          <p>No direction set. The second player's guess locks the direction until the next take is lost. After a loss, the next guesser sets a fresh direction.</p>
+        </div>
+        <div class="mode-card" style="grid-column: 1 / -1;">
+          <div class="mode-name">In Frame <span style="color: var(--hot); font-size: 14px; letter-spacing: 0.15em;">★ NEW</span></div>
+          <p>Direction doesn't matter — but the guess must stay <strong>within the threshold</strong> of the anchor, up or down. Step out of frame, lose a take. <em>Requires one of the named thresholds below.</em></p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <span class="section-num">04 · Difficulty</span>
+      <h2>Thresholds</h2>
+      <p class="lead">Pick one before starting. The threshold caps how far a guess can be from the anchor. Required for In Frame; optional for the directional modes.</p>
+      <div class="thresholds">
+        <div class="threshold">
+          <span class="threshold-window">±2.0</span>
+          <div class="threshold-info">
+            <span class="threshold-name">Easy Rider</span>
+            <span class="threshold-note">Generous — for casual play and warm-ups.</span>
+          </div>
+          <span class="threshold-ref">DENNIS HOPPER<br>1969</span>
+        </div>
+        <div class="threshold">
+          <span class="threshold-window">±1.5</span>
+          <div class="threshold-info">
+            <span class="threshold-name">Medium Cool</span>
+            <span class="threshold-note">The balanced setting.</span>
+          </div>
+          <span class="threshold-ref">HASKELL WEXLER<br>1969</span>
+        </div>
+        <div class="threshold">
+          <span class="threshold-window">±1.0</span>
+          <div class="threshold-info">
+            <span class="threshold-name">Hard Knocks</span>
+            <span class="threshold-note">Within one star. Real pressure.</span>
+          </div>
+          <span class="threshold-ref">HBO<br>2001</span>
+        </div>
+        <div class="threshold">
+          <span class="threshold-window">±0.5</span>
+          <div class="threshold-info">
+            <span class="threshold-name">Razor's Edge</span>
+            <span class="threshold-note">Half a star. Surgical. Brutal.</span>
+          </div>
+          <span class="threshold-ref">BILL MURRAY<br>1984</span>
+        </div>
+      </div>
+      <p>Clearing the direction but breaking the threshold still costs a take.</p>
+    </section>
+
+    <section>
+      <span class="section-num">05 · Comeback</span>
+      <h2>Meets It, Beats It</h2>
+      <p>An <strong>exact tie</strong> with the anchor is not a failure — it's a clutch. The guess clears the round; the anchor stays the same number going into the next turn.</p>
+      <div class="callout">
+        <div class="callout-label">★ Comeback Rule</div>
+        <p>An exact tie also <strong>regains a take</strong>, up to the firm cap of 3. You cannot exceed 3 takes at any point — extra ties past full health are just clutch guesses.</p>
+      </div>
+    </section>
+
+    <section>
+      <span class="section-num">06 · Penalties</span>
+      <h2>You Lose a Take If…</h2>
+      <ul class="lose-list">
+        <li>Your film goes the <strong>wrong way</strong> in a directional mode (e.g., aiming higher, anchor was 7.8, you land 6.9).</li>
+        <li>Your film <strong>busts the threshold</strong> when one is in play.</li>
+        <li>Your film falls <strong>out of frame</strong> in In Frame mode.</li>
+        <li>The film <strong>isn't on IMDb</strong> or has fewer than 1,000 votes.</li>
+        <li>You <strong>repeat a film</strong> already played this game.</li>
+        <li>You break a <strong>franchise rule</strong> (see below).</li>
+        <li>You can't name a film within <strong>30 seconds</strong>.</li>
+      </ul>
+      <p>A player at zero takes is out. The winner is whoever had the last correct guess when the game ends.</p>
+    </section>
+
+    <section>
+      <span class="section-num">07 · Franchises</span>
+      <h2>Repeats &amp; Franchises</h2>
+      <ul>
+        <li><strong>No repeating films.</strong> Once a film is played, it's burned for the rest of the game.</li>
+        <li><strong>Two-per-franchise cap.</strong> Each franchise can contribute a maximum of two films per game. A third pick from the same franchise costs a take.</li>
+        <li><strong>No back-to-back franchise picks.</strong> The very next guess after a franchise pick cannot come from the same franchise. One turn of breathing room minimum.</li>
+        <li><strong>What counts as a franchise:</strong> numbered sequels and prequels, direct continuations, and acknowledged shared cinematic universes (MCU, DCEU, Wizarding World, Star Wars saga, Middle-earth, etc.). Reboots from a different studio or canon (e.g., the 2002 <em>Spider-Man</em> vs the MCU one) count as the <em>same</em> franchise — same character, same franchise.</li>
+        <li><strong>What doesn't count:</strong> loose genre or stylistic similarity. Heist movies aren't a franchise. Movies by the same director aren't a franchise.</li>
+        <li><strong>Disputes:</strong> if the table can't agree whether two films share a franchise, majority vote decides. Ties go in favor of the guesser.</li>
+      </ul>
+    </section>
+
+    <section>
+      <span class="section-num">08 · Timer</span>
+      <h2>Game Timer</h2>
+      <p class="lead">Optional. For a punchier session, set a fixed game length — 5, 10, 15, or 30 minutes.</p>
+      <p>When the buzzer goes, play stops on the current turn and the <strong>last correct guess wins</strong>. Best paired with <strong>Razor's Edge</strong> thresholds for a chaotic blitz.</p>
+    </section>
+
+    <section>
+      <span class="section-num">09 · Fine Print</span>
+      <h2>Edge Cases</h2>
+      <ul>
+        <li><strong>Eligible films:</strong> feature-length (40 min+), on IMDb with 1,000+ votes. No shorts. TV movies and miniseries are out unless the whole table agrees up front.</li>
+        <li><strong>Ratings are final</strong> at the moment of lookup, even if IMDb updates a minute later.</li>
+        <li><strong>The Searcher reads the number, nothing else.</strong> No coaching, no hints, no eyebrow movements.</li>
+        <li><strong>Drift mode tie-on-second-guess:</strong> if P2 ties P1's anchor, no direction is set yet — P3 plays freely against the same anchor and <em>their</em> result sets the direction.</li>
+        <li><strong>Switchback mid-turn flip:</strong> the flip applies to the <em>next</em> guesser, not retroactively. If you push the anchor over the agreed ceiling, you survive; the next player now goes the other way.</li>
+        <li><strong>In Frame with no threshold</strong> isn't a game. Pick one of the named thresholds before starting.</li>
+      </ul>
+    </section>
+
+    <section>
+      <span class="section-num">10 · Victory</span>
+      <h2>Winning</h2>
+      <p>The winner is whoever had the <strong>last correct guess</strong> when the game ends.</p>
+      <p>The game ends when only one player has takes remaining, <em>or</em> when the optional Game Timer runs out.</p>
+      <p>In standard play, the last player standing is automatically the most recent correct guesser, so the rule resolves itself. It mainly matters when the timer expires with multiple players still alive, or in the rare case of simultaneous elimination.</p>
+      <div class="callout hot" style="margin-top: 24px;">
+        <div class="callout-label">★ Pro Tip</div>
+        <p>The Scorekeeper should keep a running list of films played so no one accidentally repeats. <em>Roll credits.</em></p>
+      </div>
+    </section>
+
+    <div class="bottom-cta">
+      <h3>Ready to Roll?</h3>
+      <p>Open the tracker and start the game.</p>
+      <a href="play.html" class="btn-primary">Start Tracker <span class="arrow">→</span></a>
+    </div>
+
+    <footer class="page-footer">
+      <div class="footer-copy">© 2026 ANTJTW</div>
+      <p class="footer-credits">
+        Created by <span class="nick">Anthony #FFF</span>,
+        <span class="nick">James "Sudowoodo" Allen</span>
+        and <span class="nick">Naoise "Shrek 2 is better than Jaws" O'Shea</span>
+        on a 12 hour journey through France 🇫🇷
+      </p>
+    </footer>
+  </main>
+</body>
+</html>

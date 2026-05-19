@@ -1,0 +1,1472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tracker — RATE RACE</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0A0A0A;
+      --bg-elevated: #141414;
+      --bg-card: #161616;
+      --bg-card-hover: #1A1A1A;
+      --imdb: #F5C518;
+      --text: #F5F5F5;
+      --text-muted: #8A8A8A;
+      --text-dim: #4A4A4A;
+      --text-faint: #2A2A2A;
+      --border: #1F1F1F;
+      --border-bright: #2A2A2A;
+      --danger: #FF3D3D;
+      --danger-dim: rgba(255, 61, 61, 0.15);
+      --success: #4ADE80;
+      --success-dim: rgba(74, 222, 128, 0.12);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+    html, body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Hanken Grotesk', sans-serif;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      overscroll-behavior: none;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.92' numOctaves='3' stitchTiles='stitch'/></filter><rect width='240' height='240' filter='url(%23n)' opacity='0.6'/></svg>");
+      pointer-events: none;
+      opacity: 0.05;
+      mix-blend-mode: overlay;
+      z-index: 100;
+    }
+
+    body.flash::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: var(--danger);
+      pointer-events: none;
+      animation: flash 0.6s ease-out;
+      z-index: 200;
+    }
+
+    @keyframes flash {
+      0% { opacity: 0; }
+      30% { opacity: 0.35; }
+      100% { opacity: 0; }
+    }
+
+    /* ============ NAV ============ */
+    .nav {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(10, 10, 10, 0.94);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 16px;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .nav-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      transition: color 0.2s;
+      justify-self: start;
+    }
+    .nav-back:hover { color: var(--text); }
+    .nav-back svg { transition: transform 0.2s; }
+    .nav-back:hover svg { transform: translateX(-3px); }
+
+    .nav-mark {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--text);
+      white-space: nowrap;
+    }
+    .nav-mark .star { color: var(--imdb); margin-right: 6px; }
+
+    .nav-actions {
+      display: flex;
+      gap: 8px;
+      justify-self: end;
+    }
+
+    .icon-btn {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: transparent;
+      border: 1px solid var(--border-bright);
+      color: var(--text);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      font-family: inherit;
+    }
+
+    .icon-btn:hover { border-color: var(--text-muted); background: var(--bg-elevated); }
+    .icon-btn:active { transform: scale(0.94); }
+
+    .icon-btn.active { border-color: var(--imdb); color: var(--imdb); }
+    .icon-btn:disabled { opacity: 0.3; cursor: not-allowed; transform: none !important; }
+    .icon-btn:disabled:hover { background: transparent; box-shadow: none; }
+
+    /* ============ TIMER PANEL ============ */
+    .timer-panel {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      border-bottom: 1px solid transparent;
+      background: var(--bg-elevated);
+    }
+    .timer-panel.open {
+      max-height: 280px;
+      border-bottom-color: var(--border);
+    }
+
+    .timer-panel-inner {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 20px 20px 24px;
+    }
+
+    .timer-panel-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--imdb);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .timer-panel-label::before { content: '★'; font-size: 11px; }
+
+    .duration-row {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+
+    .duration-btn {
+      flex: 1;
+      min-width: 56px;
+      padding: 11px 8px;
+      background: transparent;
+      border: 1px solid var(--border-bright);
+      color: var(--text);
+      font-family: 'Hanken Grotesk', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .duration-btn:hover { border-color: var(--text-muted); background: var(--bg-card); }
+    .duration-btn:active { transform: scale(0.96); }
+    .duration-btn.active {
+      background: var(--imdb);
+      color: var(--bg);
+      border-color: var(--imdb);
+    }
+
+    .timer-action-row { display: flex; gap: 8px; }
+
+    .timer-action {
+      flex: 1;
+      padding: 12px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-bright);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .timer-action:hover:not(:disabled) { background: var(--bg-card-hover); border-color: var(--text-dim); }
+    .timer-action:active:not(:disabled) { transform: scale(0.97); }
+    .timer-action:disabled { opacity: 0.4; cursor: not-allowed; }
+    .timer-action.primary { background: var(--imdb); color: var(--bg); border-color: var(--imdb); }
+    .timer-action.primary:hover:not(:disabled) { box-shadow: 0 0 20px rgba(245, 197, 24, 0.35); }
+
+    /* ============ MARQUEE STATUS ============ */
+    .marquee {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 14px 20px 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .marquee-text {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .marquee-text .dot-sep { color: var(--imdb); }
+    .marquee-text strong { color: var(--imdb); font-weight: 700; }
+
+    .marquee-text .rec-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--danger);
+      animation: recPulse 1.4s ease-in-out infinite;
+      box-shadow: 0 0 8px var(--danger);
+    }
+
+    @keyframes recPulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.7); }
+    }
+
+    .timer-display {
+      display: none;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border: 1px solid var(--border-bright);
+      border-radius: 999px;
+      background: transparent;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: var(--text);
+      font-variant-numeric: tabular-nums;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .timer-display.show { display: inline-flex; }
+    .timer-display:hover { background: var(--bg-elevated); border-color: var(--text-dim); }
+
+    .timer-display .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text-dim); }
+    .timer-display.running .dot { background: var(--success); animation: pulseDot 1.5s ease-in-out infinite; }
+    .timer-display.paused .dot { background: var(--imdb); }
+    .timer-display.warning { color: var(--danger); border-color: var(--danger); }
+    .timer-display.warning .dot { background: var(--danger); animation: pulseDot 0.8s ease-in-out infinite; }
+
+    @keyframes pulseDot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.85); }
+    }
+
+    /* ============ PLAYERS GRID ============ */
+    .players-grid {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 8px 16px 48px;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+      align-items: start;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ============ ACTIVE PLAYER CARD ============ */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-bright);
+      border-radius: 14px;
+      padding: 20px;
+      display: grid;
+      gap: 14px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.3s ease, background 0.3s ease, opacity 0.3s ease;
+      animation: cardIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes cardIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--player-color);
+      transition: opacity 0.3s ease, background 0.3s ease;
+    }
+
+    .card::after {
+      content: '';
+      position: absolute;
+      top: -40%;
+      right: -30%;
+      width: 80%;
+      height: 100%;
+      background: radial-gradient(circle, var(--player-color) 0%, transparent 60%);
+      opacity: 0.09;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .card-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .player-tag {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .player-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      color: var(--text-dim);
+      padding: 4px 8px;
+      border: 1px solid var(--border-bright);
+      border-radius: 4px;
+    }
+
+    .player-label {
+      font-family: 'Anton', sans-serif;
+      font-size: 22px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--player-color);
+      transition: color 0.3s ease;
+    }
+
+    .remove-btn {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: transparent;
+      border: none;
+      color: var(--text-dim);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+    .remove-btn:hover { color: var(--danger); background: var(--danger-dim); }
+    .remove-btn:active { transform: scale(0.92); }
+
+    /* Big counter */
+    .counter {
+      position: relative;
+      text-align: center;
+      padding: 8px 0 4px;
+      z-index: 2;
+    }
+
+    .counter-number {
+      font-family: 'Anton', sans-serif;
+      font-size: clamp(72px, 18vw, 96px);
+      line-height: 0.85;
+      letter-spacing: -0.02em;
+      color: var(--player-color);
+      filter: drop-shadow(0 0 24px var(--player-color));
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .counter-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* Chunkier segments — replaces stars */
+    .segments {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      position: relative;
+      z-index: 2;
+    }
+
+    .seg {
+      flex: 1;
+      max-width: 90px;
+      height: 10px;
+      background: var(--text-faint);
+      border-radius: 3px;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .seg.filled {
+      background: var(--player-color);
+      box-shadow: 0 0 14px var(--player-color);
+      animation: segPop 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes segPop {
+      0% { transform: scaleX(0.3); opacity: 0; }
+      100% { transform: scaleX(1); opacity: 1; }
+    }
+
+    /* Mark correct chip */
+    .correct-chip {
+      width: 100%;
+      padding: 11px 12px;
+      border-radius: 6px;
+      background: transparent;
+      border: 1px dashed var(--border-bright);
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .correct-chip:hover:not(:disabled) {
+      border-color: var(--success);
+      border-style: solid;
+      color: var(--success);
+      background: var(--success-dim);
+    }
+    .correct-chip:active:not(:disabled) { transform: scale(0.98); }
+
+    .correct-chip.active {
+      background: var(--success-dim);
+      border: 1px solid var(--success);
+      color: var(--success);
+      border-style: solid;
+    }
+    .correct-chip.active::before { content: '★'; font-size: 12px; }
+    .correct-chip:disabled { opacity: 0.3; cursor: not-allowed; }
+
+    /* Life buttons */
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .life-btn {
+      padding: 16px;
+      border-radius: 8px;
+      border: 1px solid var(--border-bright);
+      background: var(--bg-elevated);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 24px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      user-select: none;
+      -webkit-user-select: none;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .life-btn .btn-sub {
+      display: block;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .life-btn:hover:not(:disabled) { background: var(--bg-card-hover); border-color: var(--text-dim); }
+    .life-btn:active:not(:disabled) { transform: scale(0.96); }
+
+    .life-btn.plus {
+      background: var(--bg-elevated);
+      color: var(--player-color);
+      border-color: var(--player-color);
+    }
+    .life-btn.plus:hover:not(:disabled) {
+      background: var(--player-color);
+      color: var(--bg);
+    }
+    .life-btn.plus:hover:not(:disabled) .btn-sub { color: var(--bg); }
+    .life-btn:disabled { opacity: 0.25; cursor: not-allowed; }
+
+    /* ============ EMPTY SLOT — Tap to Cast ============ */
+    .slot-empty {
+      background: transparent;
+      border: 1px dashed var(--border-bright);
+      border-radius: 12px;
+      overflow: hidden;
+      transition: all 0.25s ease;
+      animation: cardIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .slot-activate {
+      width: 100%;
+      min-height: 88px;
+      background: none;
+      border: none;
+      color: var(--text-dim);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 22px;
+      font-family: inherit;
+      text-align: left;
+      transition: all 0.25s ease;
+    }
+
+    .slot-activate:hover {
+      color: var(--text);
+    }
+
+    .slot-empty:hover {
+      border-color: var(--player-color);
+      border-style: solid;
+      background: var(--bg-card);
+    }
+
+    .slot-empty:hover .slot-dot {
+      opacity: 1;
+      transform: scale(1.2);
+      box-shadow: 0 0 12px var(--player-color);
+    }
+
+    .slot-empty:hover .slot-label {
+      color: var(--player-color);
+    }
+
+    .slot-tag {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .slot-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      color: var(--text-dim);
+      padding: 4px 8px;
+      border: 1px solid var(--border-bright);
+      border-radius: 4px;
+      transition: all 0.25s ease;
+    }
+
+    .slot-empty:hover .slot-num {
+      border-color: var(--player-color);
+      color: var(--player-color);
+    }
+
+    .slot-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--player-color);
+      opacity: 0.4;
+      transition: all 0.25s ease;
+    }
+
+    .slot-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      transition: color 0.25s ease;
+    }
+
+    .slot-label .plus {
+      font-size: 16px;
+      font-weight: 400;
+      line-height: 1;
+    }
+
+    /* ============ ELIMINATED ============ */
+    .card.eliminated {
+      border-color: var(--danger);
+      background: linear-gradient(180deg, rgba(255, 61, 61, 0.05), var(--bg-card));
+    }
+    .card.eliminated::before {
+      background: var(--danger);
+      animation: borderPulse 2s ease-in-out infinite;
+    }
+    .card.eliminated::after { opacity: 0; }
+
+    @keyframes borderPulse {
+      0%, 100% { opacity: 0.5; }
+      50% { opacity: 1; }
+    }
+
+    .card.eliminated .player-label {
+      color: var(--text-dim);
+      text-decoration: line-through;
+      text-decoration-thickness: 1px;
+      text-decoration-color: var(--danger);
+    }
+
+    .card.eliminated .counter-number {
+      font-size: clamp(48px, 12vw, 64px);
+      letter-spacing: 0.16em;
+      color: var(--danger);
+      filter: drop-shadow(0 0 16px var(--danger));
+    }
+
+    .card.eliminated .counter-label {
+      color: var(--danger);
+      opacity: 0.7;
+    }
+
+    .card.eliminated .seg {
+      background: rgba(255, 61, 61, 0.12);
+      box-shadow: none;
+    }
+
+    .card.eliminated .correct-chip {
+      opacity: 0.25;
+      pointer-events: none;
+    }
+
+    .card.eliminated .life-btn.plus {
+      color: var(--text);
+      border-color: var(--border-bright);
+      background: var(--bg-elevated);
+    }
+    .card.eliminated .life-btn.plus:hover:not(:disabled) {
+      background: var(--success);
+      color: var(--bg);
+      border-color: var(--success);
+    }
+
+    /* ============ WINNER ============ */
+    .card.winner {
+      border-color: var(--imdb);
+      background: linear-gradient(180deg, rgba(245, 197, 24, 0.08), var(--bg-card));
+    }
+    .card.winner::before {
+      background: var(--imdb);
+      box-shadow: 0 0 24px var(--imdb);
+      height: 4px;
+    }
+
+    .card.winner .player-label::after {
+      content: '★ Take';
+      display: inline-block;
+      margin-left: 10px;
+      padding: 3px 9px;
+      background: var(--imdb);
+      color: var(--bg);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      border-radius: 999px;
+      vertical-align: middle;
+      transform: translateY(-3px);
+    }
+
+    /* ============ GAME OVER ============ */
+    .game-over {
+      position: fixed;
+      inset: 0;
+      background: rgba(10, 10, 10, 0.92);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      z-index: 60;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .game-over.show { display: flex; animation: overlayIn 0.4s ease-out; }
+
+    @keyframes overlayIn { from { opacity: 0; } to { opacity: 1; } }
+
+    .game-over-card {
+      max-width: 480px;
+      width: 100%;
+      background: var(--bg-card);
+      border: 1px solid var(--border-bright);
+      border-radius: 16px;
+      padding: 56px 32px 32px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      animation: cardRise 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes cardRise {
+      from { opacity: 0; transform: translateY(20px) scale(0.96); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .game-over-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 50%;
+      height: 2px;
+      background: var(--imdb);
+      box-shadow: 0 0 24px var(--imdb);
+    }
+
+    .game-over-card::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 30%;
+      height: 1px;
+      background: var(--imdb);
+      opacity: 0.4;
+    }
+
+    .go-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.32em;
+      text-transform: uppercase;
+      color: var(--danger);
+      margin-bottom: 14px;
+    }
+
+    .go-title {
+      font-family: 'Anton', sans-serif;
+      font-size: 88px;
+      line-height: 0.86;
+      letter-spacing: -0.01em;
+      text-transform: uppercase;
+      margin-bottom: 36px;
+    }
+
+    .go-divider {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin: 0 0 24px;
+      color: var(--text-dim);
+      font-size: 12px;
+    }
+    .go-divider::before, .go-divider::after {
+      content: '';
+      flex: 0 0 60px;
+      height: 1px;
+      background: var(--border-bright);
+    }
+    .go-divider .star { color: var(--imdb); font-size: 14px; }
+
+    .go-credit {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.32em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+
+    .go-winner {
+      font-family: 'Anton', sans-serif;
+      font-size: 52px;
+      line-height: 0.95;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 14px;
+      color: var(--imdb);
+    }
+    .go-winner .winner-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--winner-color, var(--imdb));
+      box-shadow: 0 0 16px var(--winner-color, var(--imdb));
+    }
+
+    .go-subnote {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin: 4px 0 32px;
+      line-height: 1.5;
+      font-style: italic;
+    }
+
+    .go-actions { display: flex; flex-direction: column; gap: 10px; }
+
+    .go-btn {
+      padding: 15px 24px;
+      border: none;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .go-btn.primary { background: var(--imdb); color: var(--bg); }
+    .go-btn.primary:hover { box-shadow: 0 0 24px rgba(245, 197, 24, 0.4); transform: translateY(-1px); }
+
+    .go-btn.ghost {
+      background: transparent;
+      border: 1px solid var(--border-bright);
+      color: var(--text);
+    }
+    .go-btn.ghost:hover { background: var(--bg-elevated); border-color: var(--text-muted); }
+    .go-btn:active { transform: scale(0.97); }
+
+    /* ============ HELP ============ */
+    .help {
+      max-width: 1200px;
+      margin: 16px auto 0;
+      padding: 0 20px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: var(--text-dim);
+      letter-spacing: 0.15em;
+      text-align: center;
+      line-height: 1.8;
+      text-transform: uppercase;
+    }
+
+    .help .dot-sep { color: var(--imdb); margin: 0 6px; }
+
+    /* ============ FOOTER ============ */
+    .footer {
+      max-width: 760px;
+      margin: 64px auto 32px;
+      padding: 28px 20px 0;
+      border-top: 1px solid var(--border);
+      text-align: center;
+    }
+
+    .footer-copy {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      margin-bottom: 16px;
+    }
+
+    .footer-credits {
+      font-size: 12px;
+      line-height: 1.65;
+      color: var(--text-muted);
+      max-width: 540px;
+      margin: 0 auto;
+      font-style: italic;
+    }
+
+    .footer-credits .nick {
+      color: var(--text);
+      font-style: normal;
+      font-weight: 500;
+    }
+
+    /* ============ RESPONSIVE ============ */
+    @media (min-width: 640px) {
+      .players-grid {
+        grid-template-columns: repeat(2, 1fr);
+        padding: 16px 24px 48px;
+        gap: 16px;
+      }
+      .nav { padding: 14px 24px; }
+      .marquee { padding: 18px 28px 8px; }
+      .icon-btn { width: 42px; height: 42px; }
+      .go-title { font-size: 110px; }
+      .go-winner { font-size: 64px; }
+    }
+
+    @media (min-width: 1024px) {
+      .players-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: 0.01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <a href="index.html" class="nav-back">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <path d="M19 12H5M12 19l-7-7 7-7"/>
+      </svg>
+      Home
+    </a>
+    <span class="nav-mark"><span class="star">★</span>Scoreboard</span>
+    <div class="nav-actions">
+      <button id="timer-toggle" class="icon-btn" aria-label="Timer settings" title="Timer settings">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <circle cx="12" cy="13" r="8"/>
+          <path d="M12 9v4l2.5 2.5M9 2h6M12 5v4"/>
+        </svg>
+      </button>
+      <button id="reset-btn" class="icon-btn" aria-label="Reset game" title="Reset game">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <path d="M3 12a9 9 0 1 0 3-6.7L3 8"/>
+          <path d="M3 3v5h5"/>
+        </svg>
+      </button>
+    </div>
+  </nav>
+
+  <div class="timer-panel" id="timer-panel">
+    <div class="timer-panel-inner">
+      <div class="timer-panel-label">Game Timer · The Buzzer</div>
+      <div class="duration-row" id="duration-row">
+        <button class="duration-btn" data-min="0">Off</button>
+        <button class="duration-btn" data-min="5">5m</button>
+        <button class="duration-btn" data-min="10">10m</button>
+        <button class="duration-btn" data-min="15">15m</button>
+        <button class="duration-btn" data-min="30">30m</button>
+      </div>
+      <div class="timer-action-row">
+        <button class="timer-action primary" id="timer-start">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" id="timer-start-icon"><path d="M8 5v14l11-7z"/></svg>
+          <span id="timer-start-label">Roll</span>
+        </button>
+        <button class="timer-action" id="timer-reset">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
+          <span>Reset</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="marquee">
+    <div class="marquee-text" id="marquee">
+      <span class="rec-dot"></span>
+      <span>NOW PLAYING</span>
+      <span class="dot-sep">●</span>
+      <span id="status-text"><strong>3</strong> OF 3 · 9 TAKES</span>
+    </div>
+    <button class="timer-display" id="timer-display" title="Open timer settings">
+      <span class="dot"></span>
+      <span id="timer-time">--:--</span>
+    </button>
+  </div>
+
+  <main class="players-grid" id="players"></main>
+
+  <p class="help">
+    Tap empty slots to cast players
+    <span class="dot-sep">●</span>
+    <strong style="color: var(--text-muted);">−</strong> for a miss
+    <span class="dot-sep">●</span>
+    <strong style="color: var(--text-muted);">+</strong> for a clutch comeback
+    <span class="dot-sep">●</span>
+    Mark Correct after a successful guess
+  </p>
+
+  <footer class="footer">
+    <div class="footer-copy">© 2026 ANTJTW</div>
+    <p class="footer-credits">
+      Created by <span class="nick">Anthony #FFF</span>,
+      <span class="nick">James "Sudowoodo" Allen</span>
+      and <span class="nick">Naoise "Shrek 2 is better than Jaws" O'Shea</span>
+      on a 12 hour journey through France 🇫🇷
+    </p>
+  </footer>
+
+  <div class="game-over" id="game-over">
+    <div class="game-over-card">
+      <div class="go-label" id="go-label">Time's Up</div>
+      <h2 class="go-title" id="go-title">Wrap</h2>
+      <div class="go-divider"><span class="star">★</span></div>
+      <div class="go-credit">Directed By</div>
+      <div class="go-winner" id="go-winner">
+        <span class="winner-dot" id="go-winner-dot"></span>
+        <span id="go-winner-name">Player 1</span>
+      </div>
+      <p class="go-subnote" id="go-subnote">Took the last correct guess.</p>
+      <div class="go-actions">
+        <button class="go-btn primary" id="go-new-game">Roll Credits · New Game</button>
+        <button class="go-btn ghost" id="go-dismiss">Keep Tracker Open</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const COLORS = [
+      '#F5C518', // 1 — IMDB Yellow
+      '#FF5C5C', // 2 — Coral
+      '#4ECDC4', // 3 — Cyan
+      '#C7F464', // 4 — Lime
+      '#FF8C42', // 5 — Tangerine
+      '#B388FF', // 6 — Violet
+      '#FF66B3', // 7 — Hot Pink
+      '#6FE7B6', // 8 — Mint
+    ];
+
+    const MAX_LIVES = 3;
+    const TOTAL_SLOTS = 8;
+    const DEFAULT_ACTIVE = 3;
+
+    // Always 8 slots, persistent. First 3 active by default; slots 4-8 are dotted empty placeholders.
+    let slots = Array.from({ length: TOTAL_SLOTS }, (_, i) => ({
+      id: `s${i + 1}`,
+      num: i + 1,
+      active: i < DEFAULT_ACTIVE,
+      lives: MAX_LIVES,
+      lastCorrectAt: null,
+    }));
+
+    const timer = {
+      durationMin: 0,
+      startedAt: null,
+      pausedAt: null,
+      pausedTotalMs: 0,
+      expired: false,
+    };
+
+    let gameOver = false;
+
+    function colorFor(num) { return COLORS[(num - 1) % COLORS.length]; }
+
+    function timerIsActive() { return timer.durationMin > 0 && timer.startedAt !== null; }
+    function timerIsRunning() { return timerIsActive() && timer.pausedAt === null && !timer.expired; }
+
+    function getTimerRemainingMs() {
+      if (timer.durationMin === 0) return null;
+      const durationMs = timer.durationMin * 60 * 1000;
+      if (!timer.startedAt) return durationMs;
+      const now = timer.pausedAt || Date.now();
+      const elapsed = now - timer.startedAt - timer.pausedTotalMs;
+      return Math.max(0, durationMs - elapsed);
+    }
+
+    function formatTime(ms) {
+      if (ms === null) return '--:--';
+      const totalSec = Math.ceil(ms / 1000);
+      const min = Math.floor(totalSec / 60);
+      const sec = totalSec % 60;
+      return `${min}:${String(sec).padStart(2, '0')}`;
+    }
+
+    function activeSlots() { return slots.filter(s => s.active); }
+
+    function getLastCorrectPlayer() {
+      let max = 0;
+      let winner = null;
+      for (const s of slots) {
+        if (s.active && s.lastCorrectAt && s.lastCorrectAt > max) {
+          max = s.lastCorrectAt;
+          winner = s;
+        }
+      }
+      return winner;
+    }
+
+    function getSurvivorWinner() {
+      const active = activeSlots();
+      if (active.length < 2) return null;
+      const alive = active.filter(s => s.lives > 0);
+      return alive.length === 1 ? alive[0] : null;
+    }
+
+    function resolveTimerWinner() {
+      const lc = getLastCorrectPlayer();
+      if (lc) return lc;
+      const alive = activeSlots().filter(s => s.lives > 0);
+      if (alive.length === 0) return null;
+      alive.sort((a, b) => b.lives - a.lives || a.num - b.num);
+      return alive[0];
+    }
+
+    const grid = document.getElementById('players');
+    const statusEl = document.getElementById('status-text');
+    const resetBtn = document.getElementById('reset-btn');
+    const timerToggle = document.getElementById('timer-toggle');
+    const timerPanel = document.getElementById('timer-panel');
+    const timerDisplay = document.getElementById('timer-display');
+    const timerTimeEl = document.getElementById('timer-time');
+    const timerStartBtn = document.getElementById('timer-start');
+    const timerStartLabel = document.getElementById('timer-start-label');
+    const timerStartIcon = document.getElementById('timer-start-icon');
+    const timerResetBtn = document.getElementById('timer-reset');
+    const durationRow = document.getElementById('duration-row');
+    const gameOverEl = document.getElementById('game-over');
+    const goTitleEl = document.getElementById('go-title');
+    const goLabelEl = document.getElementById('go-label');
+    const goWinnerNameEl = document.getElementById('go-winner-name');
+    const goWinnerDotEl = document.getElementById('go-winner-dot');
+    const goSubnoteEl = document.getElementById('go-subnote');
+
+    function render() {
+      const active = activeSlots();
+      const activeCount = active.length;
+      const aliveCount = active.filter(s => s.lives > 0).length;
+      const livesTotal = active.reduce((sum, s) => sum + s.lives, 0);
+
+      statusEl.innerHTML = activeCount === 0
+        ? 'EMPTY HOUSE · TAP A SLOT'
+        : `<strong>${aliveCount}</strong> OF ${activeCount} · ${livesTotal} TAKES`;
+
+      const lcPlayer = getLastCorrectPlayer();
+      const lcId = lcPlayer ? lcPlayer.id : null;
+      const winner = getSurvivorWinner();
+
+      grid.innerHTML = slots.map(s =>
+        s.active
+          ? renderActiveCard(s, winner && winner.id === s.id, s.id === lcId)
+          : renderEmptySlot(s)
+      ).join('');
+
+      renderTimer();
+      renderDurationButtons();
+      renderTimerControls();
+    }
+
+    function renderActiveCard(s, isWinner, isLastCorrect) {
+      const eliminated = s.lives === 0;
+      const color = colorFor(s.num);
+      const segments = Array.from({ length: MAX_LIVES }, (_, i) =>
+        `<span class="seg ${i < s.lives ? 'filled' : ''}"></span>`
+      ).join('');
+
+      const classes = ['card'];
+      if (eliminated) classes.push('eliminated');
+      if (isWinner) classes.push('winner');
+
+      const chipLabel = isLastCorrect ? 'Last Correct' : 'Mark Correct';
+      const counterNum = eliminated ? 'OUT' : String(s.lives).padStart(2, '0');
+      const counterLabel = eliminated ? 'Fade Out' : 'Takes Left';
+
+      return `
+        <article class="${classes.join(' ')}" style="--player-color: ${color}" data-id="${s.id}">
+          <div class="card-head">
+            <div class="player-tag">
+              <span class="player-num">P${String(s.num).padStart(2, '0')}</span>
+              <span class="player-label">Player ${s.num}</span>
+            </div>
+            <button class="remove-btn" data-action="remove" data-id="${s.id}" aria-label="Remove Player ${s.num}" title="Cut Player ${s.num}">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <path d="M18 6L6 18M6 6l12 12"/>
+              </svg>
+            </button>
+          </div>
+          <div class="counter">
+            <div class="counter-number">${counterNum}</div>
+            <div class="counter-label">${counterLabel}</div>
+          </div>
+          <div class="segments">${segments}</div>
+          <button class="correct-chip ${isLastCorrect ? 'active' : ''}" data-action="correct" data-id="${s.id}" ${eliminated ? 'disabled' : ''} aria-pressed="${isLastCorrect}">
+            ${chipLabel}
+          </button>
+          <div class="controls">
+            <button class="life-btn minus" data-action="dec" data-id="${s.id}" ${s.lives === 0 ? 'disabled' : ''} aria-label="Lose a take">
+              −<span class="btn-sub">Miss</span>
+            </button>
+            <button class="life-btn plus" data-action="inc" data-id="${s.id}" ${s.lives === MAX_LIVES ? 'disabled' : ''} aria-label="Gain a take">
+              +<span class="btn-sub">${eliminated ? 'Revive' : 'Clutch'}</span>
+            </button>
+          </div>
+        </article>
+      `;
+    }
+
+    function renderEmptySlot(s) {
+      const color = colorFor(s.num);
+      return `
+        <article class="slot-empty" style="--player-color: ${color}" data-id="${s.id}">
+          <button class="slot-activate" data-action="activate" data-id="${s.id}" aria-label="Cast Player ${s.num}">
+            <span class="slot-tag">
+              <span class="slot-num">P${String(s.num).padStart(2, '0')}</span>
+              <span class="slot-dot"></span>
+            </span>
+            <span class="slot-label">
+              <span class="plus">+</span>
+              <span>Cast Player ${s.num}</span>
+            </span>
+          </button>
+        </article>
+      `;
+    }
+
+    function renderTimer() {
+      if (timer.durationMin === 0) {
+        timerDisplay.classList.remove('show', 'running', 'paused', 'warning');
+        return;
+      }
+      timerDisplay.classList.add('show');
+      const remaining = getTimerRemainingMs();
+      timerTimeEl.textContent = formatTime(remaining);
+      timerDisplay.classList.toggle('running', timerIsRunning());
+      timerDisplay.classList.toggle('paused', timerIsActive() && timer.pausedAt !== null && !timer.expired);
+      timerDisplay.classList.toggle('warning', timerIsRunning() && remaining !== null && remaining < 60000);
+    }
+
+    function renderDurationButtons() {
+      durationRow.querySelectorAll('.duration-btn').forEach(btn => {
+        const min = parseInt(btn.dataset.min);
+        btn.classList.toggle('active', min === timer.durationMin);
+      });
+    }
+
+    function renderTimerControls() {
+      const noTimer = timer.durationMin === 0;
+      timerStartBtn.disabled = noTimer || timer.expired;
+      timerResetBtn.disabled = noTimer || (!timer.startedAt && !timer.expired);
+
+      if (timerIsRunning()) {
+        timerStartLabel.textContent = 'Cut';
+        timerStartIcon.innerHTML = '<path d="M6 4h4v16H6zM14 4h4v16h-4z"/>';
+      } else {
+        timerStartLabel.textContent = timer.pausedAt && !timer.expired ? 'Roll Again' : 'Roll';
+        timerStartIcon.innerHTML = '<path d="M8 5v14l11-7z"/>';
+      }
+    }
+
+    function tick() {
+      if (!timerIsRunning()) return;
+      const remaining = getTimerRemainingMs();
+      if (remaining !== null && remaining <= 0) {
+        timer.expired = true;
+        timer.pausedAt = Date.now();
+        triggerGameOver('timer');
+        return;
+      }
+      renderTimer();
+    }
+    setInterval(tick, 250);
+
+    function triggerGameOver(reason) {
+      gameOver = true;
+      document.body.classList.add('flash');
+      setTimeout(() => document.body.classList.remove('flash'), 700);
+
+      const winner = reason === 'timer' ? resolveTimerWinner() : getSurvivorWinner();
+
+      if (reason === 'timer') {
+        goLabelEl.textContent = "Time's Up";
+        goTitleEl.textContent = 'Wrap';
+      } else {
+        goLabelEl.textContent = 'Game Over';
+        goTitleEl.textContent = 'Cut';
+      }
+
+      if (winner) {
+        goWinnerNameEl.textContent = `Player ${winner.num}`;
+        goWinnerDotEl.style.setProperty('--winner-color', colorFor(winner.num));
+        if (winner.lastCorrectAt) {
+          goSubnoteEl.textContent = 'with the last correct guess.';
+        } else if (reason === 'timer') {
+          goSubnoteEl.textContent = 'most takes standing — no correct guesses marked.';
+        } else {
+          goSubnoteEl.textContent = 'last star left in the house.';
+        }
+      } else {
+        goWinnerNameEl.textContent = 'No One';
+        goWinnerDotEl.style.setProperty('--winner-color', 'var(--text-dim)');
+        goSubnoteEl.textContent = 'everyone faded out at the same beat.';
+      }
+
+      gameOverEl.classList.add('show');
+      render();
+    }
+
+    function dismissGameOver() {
+      gameOverEl.classList.remove('show');
+    }
+
+    function fullReset() {
+      slots.forEach((s, i) => {
+        s.active = i < DEFAULT_ACTIVE;
+        s.lives = MAX_LIVES;
+        s.lastCorrectAt = null;
+      });
+      timer.startedAt = null;
+      timer.pausedAt = null;
+      timer.pausedTotalMs = 0;
+      timer.expired = false;
+      gameOver = false;
+      gameOverEl.classList.remove('show');
+      render();
+    }
+
+    grid.addEventListener('click', (e) => {
+      const target = e.target.closest('[data-action]');
+      if (!target) return;
+
+      const action = target.dataset.action;
+      const id = target.dataset.id;
+      const slot = slots.find(s => s.id === id);
+      if (!slot) return;
+
+      if (action === 'activate') {
+        slot.active = true;
+        slot.lives = MAX_LIVES;
+        slot.lastCorrectAt = null;
+        render();
+      } else if (action === 'remove') {
+        // Deactivate: turn the active card back into a dotted empty slot
+        slot.active = false;
+        slot.lives = MAX_LIVES;
+        slot.lastCorrectAt = null;
+        render();
+      } else if (action === 'inc') {
+        if (slot.lives < MAX_LIVES) {
+          slot.lives++;
+          render();
+        }
+      } else if (action === 'dec') {
+        if (slot.lives > 0) {
+          slot.lives--;
+          slot.lastCorrectAt = null;
+          render();
+          if (getSurvivorWinner() && !gameOver) {
+            if (timerIsRunning()) timer.pausedAt = Date.now();
+            triggerGameOver('survivor');
+          }
+        }
+      } else if (action === 'correct') {
+        if (slot.lives === 0) return;
+        slot.lastCorrectAt = Date.now();
+        render();
+      }
+    });
+
+    resetBtn.addEventListener('click', () => {
+      activeSlots().forEach(s => { s.lives = MAX_LIVES; s.lastCorrectAt = null; });
+      timer.startedAt = null;
+      timer.pausedAt = null;
+      timer.pausedTotalMs = 0;
+      timer.expired = false;
+      gameOver = false;
+      gameOverEl.classList.remove('show');
+      render();
+    });
+
+    timerToggle.addEventListener('click', () => {
+      timerPanel.classList.toggle('open');
+      timerToggle.classList.toggle('active', timerPanel.classList.contains('open'));
+    });
+
+    timerDisplay.addEventListener('click', () => {
+      timerPanel.classList.add('open');
+      timerToggle.classList.add('active');
+    });
+
+    durationRow.addEventListener('click', (e) => {
+      const btn = e.target.closest('.duration-btn');
+      if (!btn) return;
+      const min = parseInt(btn.dataset.min);
+      timer.durationMin = min;
+      timer.startedAt = null;
+      timer.pausedAt = null;
+      timer.pausedTotalMs = 0;
+      timer.expired = false;
+      render();
+    });
+
+    timerStartBtn.addEventListener('click', () => {
+      if (timer.durationMin === 0 || timer.expired) return;
+      if (!timer.startedAt) {
+        timer.startedAt = Date.now();
+        timer.pausedAt = null;
+        timer.pausedTotalMs = 0;
+      } else if (timer.pausedAt) {
+        timer.pausedTotalMs += Date.now() - timer.pausedAt;
+        timer.pausedAt = null;
+      } else {
+        timer.pausedAt = Date.now();
+      }
+      render();
+    });
+
+    timerResetBtn.addEventListener('click', () => {
+      timer.startedAt = null;
+      timer.pausedAt = null;
+      timer.pausedTotalMs = 0;
+      timer.expired = false;
+      render();
+    });
+
+    document.getElementById('go-new-game').addEventListener('click', fullReset);
+    document.getElementById('go-dismiss').addEventListener('click', dismissGameOver);
+
+    render();
+  </script>
+</body>
+</html>
